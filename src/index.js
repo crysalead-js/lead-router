@@ -1,13 +1,11 @@
-import Router from './router';
-import Route from './route';
-import Parser from './parser';
-import Transition from './transition';
+var Router = require('./router');
+var Route = require('./route');
+var Parser = require('./parser');
+var Transition = require('./transition');
 
-export default Router;
-
-export {
-    Router,
-    Route,
-    Parser,
-    Transition
+module.exports = {
+  Router: Router,
+  Route: Route,
+  Parser: Parser,
+  Transition: Transition
 };

@@ -1,4 +1,4 @@
-import Parser from '../../src/parser';
+var Parser = require('../../src/parser');
 
 function template(pattern) {
   return Parser.compile(Parser.tokenize(pattern));

@@ -1,4 +1,4 @@
-import Route from '../../src/route';
+var Route = require('../../src/route');
 
 describe("Route", function() {
 

@@ -1,4 +1,5 @@
-import { extend, merge } from 'extend-merge';
+var extend = require('extend-merge').extend;
+var merge = require('extend-merge').merge;
 
 class Transition {
 
@@ -149,4 +150,4 @@ class Transition {
 
 }
 
-export default Transition;
+module.exports = Transition;

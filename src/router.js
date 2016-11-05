@@ -1,16 +1,17 @@
-import Emitter from "component-emitter";
-import qs from 'qs';
-import trim from 'trim-character';
-import { extend, merge } from 'extend-merge';
-import Route from './route';
-import Transition from './transition';
+var Emitter = require('component-emitter');
+var qs = require('qs');
+var trim = require('trim-character');
+var extend = require('extend-merge').extend;
+var merge = require('extend-merge').merge;
+var Route = require('./route');
+var Transition = require('./transition');
 
 class Router {
 
   constructor(options) {
     this._options = extend({
       basePath: null,
-      mode: (history.pushState) ? 'history' : 'hash',
+      mode: history.pushState ? 'history' : 'hash',
       dispatch: (state, routes) => {
         throw new Error('Missing dispatching handler, you need to define a dispatching handler.');
       }
@@ -178,4 +179,4 @@ Emitter(Router.prototype);
  */
 Router.currentRoute = null;
 
-export default Router;
+module.exports = Router;

@@ -292,4 +292,4 @@ class Parser {
 }
 
 Parser.VARIABLE_REGEX = /\{(\w+)(?::([^{}]*(?:\{(?:([^{}]*(?:\{(?:.*?)\}[^{}]*)*))\}[^{}]*)*))?\}/g
-export default Parser;
+module.exports = Parser;

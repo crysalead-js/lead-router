@@ -1,6 +1,7 @@
-import { extend, merge } from 'extend-merge';
-import trim from 'trim-character';
-import Parser from './parser';
+var extend = require('extend-merge').extend;
+var merge = require('extend-merge').merge;
+var trim = require('trim-character');
+var Parser = require('./parser');
 
 class Route {
 
@@ -548,4 +549,4 @@ class Route {
   }
 }
 
-export default Route;
+module.exports = Route
