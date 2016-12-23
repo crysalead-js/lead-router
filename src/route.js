@@ -485,15 +485,11 @@ class Route {
    *
    * @return self
    */
-  state(names, pattern, content) {
+  add(names, pattern, content) {
     if (names == null) {
       throw new Error("A route's name can't be empty.");
     }
     names = Array.isArray(names) ? names : names.split('.');
-
-    if (arguments.length === 1) {
-      return this._state(names);
-    }
 
     pattern = pattern || '';
     content = content || {};
@@ -511,19 +507,19 @@ class Route {
       }
       var parent = this._children.get(names[0]);
       names.shift();
-      parent.state(names, pattern, content);
+      parent.add(names, pattern, content);
     }
     return this;
   }
 
 
   /**
-   * Gets a route instance from a route name.
+   * Return a route instance from a route name.
    *
    * @param  mixed  names The dotted route name string or a route name array.
    * @return Object       Returns the corresponding route.
    */
-  _state(names) {
+  fetch(names) {
     if (names == null) {
       throw new Error("A route's name can't be empty.");
     }
@@ -537,7 +533,7 @@ class Route {
       }
       var child = this._children.get(names[0]);
       names.shift();
-      return child._state(names);
+      return child.fetch(names);
     }
   }
 

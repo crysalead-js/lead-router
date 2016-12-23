@@ -32,9 +32,9 @@ describe("Route", function() {
     it("gets the route's name", function() {
 
       var route = new Route();
-      route.state('post', '/post');
+      route.add('post', '/post');
 
-      expect(route.state('post').name()).toBe('post');
+      expect(route.fetch('post').name()).toBe('post');
 
     });
 
@@ -42,13 +42,13 @@ describe("Route", function() {
 
   describe(".content()", function() {
 
-    it("gets the route's content setted through `.state()`", function() {
+    it("gets the route's content setted through `.add()`", function() {
 
       var route = new Route();
       var content = { component: 'PostComponent' };
-      route.state('post', '/post', content);
+      route.add('post', '/post', content);
 
-      expect(route.state('post').content()).toBe(content);
+      expect(route.fetch('post').content()).toBe(content);
 
     });
 
@@ -174,11 +174,11 @@ describe("Route", function() {
     it("returns the parent route", function() {
 
       var route = new Route();
-      route.state('post', '/post');
-      route.state('post.id', '/{id}');
+      route.add('post', '/post');
+      route.add('post.id', '/{id}');
 
-      var middle = route.state('post');
-      var leaf = route.state('post.id');
+      var middle = route.fetch('post');
+      var leaf = route.fetch('post.id');
 
       expect(leaf.parent()).toBe(middle);
       expect(middle.parent()).toBe(route);
@@ -192,15 +192,15 @@ describe("Route", function() {
     it("returns all route's ancestors as well as the route itself", function() {
 
       var route = new Route();
-      route.state('post', '/post');
-      route.state('post.id', '/{id}');
+      route.add('post', '/post');
+      route.add('post.id', '/{id}');
 
-      var leaf = route.state('post.id');
+      var leaf = route.fetch('post.id');
 
       expect(leaf.hierarchy()).toEqual([
         route,
-        route.state('post'),
-        route.state('post.id')
+        route.fetch('post'),
+        route.fetch('post.id')
       ]);
 
     });

@@ -11,8 +11,8 @@ class Router {
   constructor(options) {
     this._options = extend({
       basePath: null,
-      mode: history.pushState ? 'history' : 'hash',
-      dispatch: (state, routes) => {
+      mode: (history && history.pushState) ? 'history' : 'hash',
+      handler: (name, routes) => {
         throw new Error('Missing dispatching handler, you need to define a dispatching handler.');
       }
     }, options);
@@ -25,6 +25,26 @@ class Router {
     this._basePath = this._basePath ?  '/' + this._basePath : '';
     this._route = new Route();
     this._interval = null;
+    /**
+     * The current route instance
+     *
+     * var Object
+     */
+    this._current = null;
+  }
+
+  /**
+   * Gets/sets the router dispatch handler.
+   *
+   * @param  Function      handler The dispatch handler.
+   * @return Function|self         The dispatch handler on get or `this` on set.
+   */
+  handler(handler) {
+    if (!arguments.length) {
+      return this._options.handler;
+    }
+    this._options.handler = handler;
+    return this;
   }
 
   /**
@@ -36,9 +56,21 @@ class Router {
    *
    * @return self
    */
-  state(name, pattern, content) {
-    this._route.state(name, pattern, content);
+  add(name, pattern, content) {
+    this._route.add(name, pattern, content);
     return this;
+  }
+
+  /**
+   * Get the current route name.
+   *
+   * @return String|undefined
+   */
+  name() {
+    if (!this._current) {
+      return;
+    }
+    return this._current.name();
   }
 
   /**
@@ -49,6 +81,10 @@ class Router {
    * @return String        The built URL
    */
   link(name, params, options) {
+
+    if (name && name.match(/^(.*:)?\/\/.*/)) {
+      return name;
+    }
 
     var defaults = {
       'absolute': false,
@@ -97,7 +133,7 @@ class Router {
         bag.params = extend({}, qs.parse(parts[1]), bag.params);
       }
       result = new Transition({
-        from: Router.currentRoute,
+        from: this._current,
         to: bag.route,
         params: bag.params
       });
@@ -115,10 +151,10 @@ class Router {
       var match = window.location.href.match(/#(.*)$/);
       path = match ? match[1] : '';
     }
-    return path;
+    return path.replace(/index\.html$/, '');
   }
 
-  navigate(name, params, options) {
+  push(name, params, options) {
     var path = this._route.link(name, params, options);
     if (this._options.mode === 'history') {
         history.pushState(null, null, this._basePath + path);
@@ -128,7 +164,7 @@ class Router {
     return this.location();
   }
 
-  start() {
+  listen() {
     if (this._interval) {
       return;
     }
@@ -147,12 +183,13 @@ class Router {
         return;
       }
 
-      return this._options.dispatch(transition, this).then(() => {
-        Router.currentRoute = transition.to();
+      return this._options.handler(transition, this).then(() => {
+        this._current = transition.to();
+        this.emit('transitioned', transition);
       }, () => {
         this.emit('424', transition.to());
-        if (Router.currentRoute) {
-          this.navigate(Router.currentRoute.name());
+        if (this._current) {
+          this.push(this._current.name());
         }
       });
     };
@@ -171,12 +208,5 @@ class Router {
 }
 
 Emitter(Router.prototype);
-
-/**
- * The current route instance
- *
- * var Object
- */
-Router.currentRoute = null;
 
 module.exports = Router;

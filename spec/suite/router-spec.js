@@ -12,7 +12,7 @@ describe("Router", function() {
 
     it("creates absolute paths with custom base path", function() {
 
-      this.router.state('foobar', 'foo/{bar}');
+      this.router.add('foobar', 'foo/{bar}');
 
       var link = this.router.link('foobar', { bar: 'baz' }, {
         scheme: 'https',
@@ -30,14 +30,14 @@ describe("Router", function() {
 
     it("merges query string variables", function() {
 
-      this.router.state('post', 'post/{id}');
+      this.router.add('post', 'post/{id}');
       expect(this.router.match('post/123?foo=bar').params()).toEqual({id: '123', foo: 'bar'});
 
     });
 
     it("doesn't override path's variables with query string variables", function() {
 
-      this.router.state('post', 'post/{id}');
+      this.router.add('post', 'post/{id}');
       expect(this.router.match('post/123?id=bar').params()).toEqual({id: '123'});
 
     });
@@ -50,8 +50,8 @@ describe("Router", function() {
 
       it("creates absolute paths with custom base path", function() {
 
-        this.router.state('foo', '/foo');
-        this.router.state('foo.bar', '/{bar}');
+        this.router.add('foo', '/foo');
+        this.router.add('foo.bar', '/{bar}');
 
         var link = this.router.link('foo.bar', { bar: 'baz' }, {
           scheme: 'https',
@@ -69,8 +69,8 @@ describe("Router", function() {
 
       it("merges query string variables", function() {
 
-        this.router.state('post', 'post');
-        this.router.state('post.id', '/{id}');
+        this.router.add('post', 'post');
+        this.router.add('post.id', '/{id}');
 
         expect(this.router.match('post/123?foo=bar').params()).toEqual({id: '123', foo: 'bar'});
 
@@ -78,8 +78,8 @@ describe("Router", function() {
 
       it("doesn't override path's variables with query string variables", function() {
 
-        this.router.state('post', 'post');
-        this.router.state('post.id', '/{id}');
+        this.router.add('post', 'post');
+        this.router.add('post.id', '/{id}');
 
         expect(this.router.match('post/123?id=bar').params()).toEqual({id: '123'});
 
