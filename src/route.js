@@ -362,6 +362,7 @@ class Route {
 
       if (!values[i]) {
         variables[name] = !pattern ? null : [];
+        i++;
         continue;
       }
       if (!pattern) {
@@ -376,7 +377,12 @@ class Route {
         var matches;
 
         while (matches = regex.exec(values[i])) {
-          variables[name].push(matches[1]);
+          var value = matches[1];
+          if (value.indexOf('/') !== -1) {
+            variables[name].push(value.split('/'));
+          } else {
+            variables[name].push(value);
+          }
         }
       }
       i++;
@@ -427,16 +433,24 @@ class Route {
         }
         continue;
       }
-      if (params[child.name] === undefined) {
+      if (params[child.name] == null) {
         if (!token.optional) {
           throw new Error("Missing parameters `'"  + child.name + "'` for route: `'" + this.name() + "#/" + this.pattern() + "'`.");
         }
         return '';
       }
-      if (Array.isArray(params[child.name])) {
-        throw new Error("Expected `'" + child.name + "'` to not repeat, but received `[" + params[child.name] + "]`.");
+
+      var data = params[child.name];
+      var parts = [];
+      if (data) {
+        parts = Array.isArray(data) ? data : [data];
       }
-      var value = encodeURIComponent(params[child.name]);
+
+      for (var i = 0, len = parts.length; i < len; i++) {
+        parts[i] = encodeURIComponent(parts[i]);
+      }
+
+      var value = parts.join('/');
       var regex = new RegExp('^' + child.pattern + '$');
       if (!regex.test(value)) {
         throw new Error("Expected `'" + child.name + "'` to match `'" + child.pattern + "'`, but received `'" + value + "'`.");

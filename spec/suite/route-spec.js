@@ -207,7 +207,6 @@ describe("Route", function() {
 
   });
 
-
   describe(".match()", function() {
 
     it("matches URL with no placeholders", function() {
@@ -346,6 +345,27 @@ describe("Route", function() {
 
     });
 
+    it("supports route with complex repeatable optional segments", function() {
+
+      var path, route = new Route({pattern: '[{relations:[^/]+/[^/:][^/]*}/]*post[/{id:[^/:][^/]*}][/:{action}]'});
+
+      path = route.path();
+      expect(path).toBe('/post');
+
+      path = route.path({ action: 'add' });
+      expect(path).toBe('/post/:add');
+
+      path = route.path({ action: 'edit', id: 12 });
+      expect(path).toBe('/post/12/:edit');
+
+      path = route.path({ relations: [['user', 5]] });
+      expect(path).toBe('/user/5/post');
+
+      path = route.path({ relations: [['user', 5]], action: 'edit', id: 12 });
+      expect(path).toBe('/user/5/post/12/:edit');
+
+    });
+
     it("throws an exception for missing variables", function() {
 
       var closure = function() {
@@ -372,7 +392,7 @@ describe("Route", function() {
         var route = new Route({'pattern': '/post/{id}'});
         route.path({id: ['123', '456']});
       };
-      expect(closure).toThrow(new Error("Expected `'id'` to not repeat, but received `[123,456]`."));
+      expect(closure).toThrow(new Error("Expected `'id'` to match `'[^/]+'`, but received `'123/456'`."));
 
     });
 

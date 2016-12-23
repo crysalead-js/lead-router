@@ -35,6 +35,20 @@ describe("Router", function() {
 
     });
 
+    it("matches relationships based routes", function() {
+
+      this.router.add('comment', '[{relations:[^/]+/[^/:][^/]*}/]*comment[/{id:[^/:][^/]*}][/:{action}]');
+      expect(this.router.match('blog/1/post/22/comment/:something').params()).toEqual({
+        relations: [
+          ['blog', '1'],
+          ['post', '22']
+        ],
+        id: null,
+        action: 'something',
+      });
+
+    });
+
     it("doesn't override path's variables with query string variables", function() {
 
       this.router.add('post', 'post/{id}');
