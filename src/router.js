@@ -169,13 +169,29 @@ class Router {
   }
 
   push(name, params, options) {
-    var path = this._route.link(name, params, options);
+    var path = this.link(name, params, options);
+    var promise = new Promise(function(resolve, reject) {
+      function transitioned(transition) {
+        if (transition.to().name() === name) {
+          resolve(this.location());
+          this.off('transitioned', transitioned);
+        }
+      }
+      function errored(transition) {
+        if (transition.to().name() === name) {
+          reject(this.location());
+          this.off('424', errored);
+        }
+      }
+      this.on('transitioned', transitioned);
+      this.on('424', errored);
+    }.bind(this));
     if (this._options.mode === 'history') {
         history.pushState(null, null, this._basePath + path);
     } else {
         location.href = location.href.replace(/#(.*)$/, '') + '#' + path;
     }
-    return this.location();
+    return promise;
   }
 
   listen() {
