@@ -74,6 +74,20 @@ class Router {
   }
 
   /**
+   * Get/set the current route.
+   *
+   * @param  Object|undefined The current route to set or none to get the setted one.
+   * @return Object|self
+   */
+  current(route) {
+    if (!arguments.length) {
+      return this._current;
+    }
+    this._current = route;
+    return this;
+  }
+
+  /**
    * Generates an URL from a route name and route params.
    *
    * @param  String name  The route name
@@ -133,7 +147,7 @@ class Router {
         bag.params = extend({}, qs.parse(parts[1]), bag.params);
       }
       result = new Transition({
-        from: this._current,
+        from: this.current(),
         to: bag.route,
         params: bag.params
       });
@@ -184,12 +198,12 @@ class Router {
       }
 
       return this._options.handler(transition, this).then(() => {
-        this._current = transition.to();
+        this.current(transition.to());
         this.emit('transitioned', transition);
       }, () => {
-        this.emit('424', transition.to());
-        if (this._current) {
-          this.push(this._current.name());
+        this.emit('424', transition);
+        if (this.current()) {
+          this.push(this.name());
         }
       });
     };
