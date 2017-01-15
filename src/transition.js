@@ -65,7 +65,7 @@ class Transition {
    *
    * @return Array The routes to unmount.
    */
-  disabled() {
+  disabled(params) {
     var list = [];
     var from = this.from();
 
@@ -81,7 +81,7 @@ class Transition {
     var target = to.hierarchy() || [];
 
     for (var index = 0; index < len; index++) {
-      if (origin[index] !== target[index]) {
+      if (origin[index] !== target[index] || !target[index].matchParams(params, this.params())) {
         var i = len - 1;
         while (i >= index) {
           list.push(origin[i]);
@@ -94,20 +94,11 @@ class Transition {
   }
 
   /**
-   * Return the junction route.
-   *
-   * @return Object The junction route.
-   */
-  junction() {
-    return this.enabled()[0] ? this.enabled()[0].parent() : undefined;
-  }
-
-  /**
    * Gets the list of routes to mount.
    *
    * @return Array The routes to unmout.
    */
-  enabled() {
+  enabled(params) {
     var list = [];
     var from = this.from();
     var to = this.to();
@@ -121,7 +112,7 @@ class Transition {
       var origin = from.hierarchy();
 
       for (index = 0; index < len; index++) {
-        if (origin[index] !== target[index]) {
+        if (origin[index] !== target[index] || !target[index].matchParams(params, this.params())) {
           break;
         }
       }

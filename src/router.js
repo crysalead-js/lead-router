@@ -30,7 +30,21 @@ class Router {
      *
      * var Object
      */
-    this._current = null;
+    this._currentRoute = null;
+
+    /**
+     * The current params
+     *
+     * var Object
+     */
+    this._currentParams = {};
+
+    /**
+     * The current url
+     *
+     * var String
+     */
+    this._currentLocation = null;
   }
 
   /**
@@ -62,29 +76,71 @@ class Router {
   }
 
   /**
-   * Get the current route name.
-   *
-   * @return String|undefined
-   */
-  name() {
-    if (!this._current) {
-      return;
-    }
-    return this._current.name();
-  }
-
-  /**
    * Get/set the current route.
    *
    * @param  Object|undefined The current route to set or none to get the setted one.
    * @return Object|self
    */
-  current(route) {
+  currentRoute(route) {
     if (!arguments.length) {
-      return this._current;
+      return this._currentRoute;
     }
-    this._current = route;
+    this._currentRoute = route;
     return this;
+  }
+
+  /**
+   * Get/set the current params.
+   *
+   * @param  Object|undefined The current params to set or none to get the setted one.
+   * @return Object|self
+   */
+  currentParams(params) {
+    if (!arguments.length) {
+      return this._currentParams;
+    }
+    this._currentParams = params;
+    return this;
+  }
+
+  /**
+   * Get/set the current URL.
+   *
+   * @param  String|undefined The current URL to set or none to get the setted one.
+   * @return String|self
+   */
+  currentLocation(url) {
+    if (!arguments.length) {
+      return this._currentLocation;
+    }
+    this._currentLocation = url;
+    return this;
+  }
+
+  /**
+   * Check is a state is active or not.
+   *
+   * @param  params Object  The params of the state.
+   * @return        Boolean
+   */
+  isActive(name, params) {
+    var currentRoute = this.currentRoute();
+    if (!this._currentRoute) {
+      return false;
+    }
+    function paramsMatch(currentParams, params) {
+      if (currentParams === params) {
+        return true;
+      }
+      for (var name in params) {
+        if (String(currentParams[name]) !== String(params[name])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    var currentRouteName = currentRoute.name();
+    return (name === currentRouteName || currentRouteName.indexOf(name + '.') === 0) && paramsMatch(this.currentParams(), params);
   }
 
   /**
@@ -103,12 +159,11 @@ class Router {
     var defaults = {
       'absolute': false,
       'basePath': this._basePath,
-      'query': '',
+      'query': {},
       'fragment': ''
     };
     options = extend({}, defaults, options);
-
-    var path = this._route.link(name, params);
+    var path = this._route.link(name, params, options);
 
     path = trim.right(options.basePath, '/') + (this._options.mode === 'hash' ? '#' : '') + path;
 
@@ -139,15 +194,12 @@ class Router {
   match(url) {
     var parts = url.split('?');
     var path = trim.left(parts[0], '/');
-    var bag = this._route.match(path);
+    var bag = this._route.match(path, parts[1] ? qs.parse(parts[1]) : {});
     var result;
 
     if (bag) {
-      if (path[1]) {
-        bag.params = extend({}, qs.parse(parts[1]), bag.params);
-      }
       result = new Transition({
-        from: this.current(),
+        from: this.currentRoute(),
         to: bag.route,
         params: bag.params
       });
@@ -159,7 +211,6 @@ class Router {
     var path = '';
     if (this._options.mode === 'history') {
       path = decodeURI(location.pathname + location.search);
-      path = path.replace(/\?(.*)$/, '');
       path = path.replace(this._basePath, '');
     } else {
       var match = window.location.href.match(/#(.*)$/);
@@ -170,56 +221,43 @@ class Router {
 
   push(name, params, options) {
     var path = this.link(name, params, options);
-    var promise = new Promise(function(resolve, reject) {
-      function transitioned(transition) {
-        if (transition.to().name() === name) {
-          resolve(this.location());
-          this.off('transitioned', transitioned);
-        }
-      }
-      function errored(transition) {
-        if (transition.to().name() === name) {
-          reject(this.location());
-          this.off('424', errored);
-        }
-      }
-      this.on('transitioned', transitioned);
-      this.on('424', errored);
-    }.bind(this));
     if (this._options.mode === 'history') {
         history.pushState(null, null, this._basePath + path);
     } else {
         location.href = location.href.replace(/#(.*)$/, '') + '#' + path;
     }
-    return promise;
   }
 
   listen() {
     if (this._interval) {
       return;
     }
-    var current = undefined;
 
     var listen = () => {
       var path = this.location();
-      if (current === path) {
+      if (this.currentLocation() === path) {
         return;
       }
-      current = path;
+      this.currentLocation(path);
 
       var transition = this.match(path);
+
       if (!transition) {
         this.emit('404', path);
         return;
       }
 
-      return this._options.handler(transition, this).then(() => {
-        this.current(transition.to());
+      return this._options.handler(transition, this).then((redirected) => {
+        if (!redirected) {
+          this.currentRoute(transition.to());
+          this.currentParams(transition.params());
+        }
         this.emit('transitioned', transition);
       }, () => {
         this.emit('424', transition);
-        if (this.current()) {
-          this.push(this.name());
+        var currentRoute = this.currentRoute();
+        if (currentRoute) {
+          this.push(currentRoute.name());
         }
       });
     };

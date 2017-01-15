@@ -30,7 +30,7 @@ describe("Router", function() {
 
     it("merges query string variables", function() {
 
-      this.router.add('post', 'post/{id}');
+      this.router.add('post', 'post/{id}?{foo}');
       expect(this.router.match('post/123?foo=bar').params()).toEqual({id: '123', foo: 'bar'});
 
     });
@@ -83,7 +83,7 @@ describe("Router", function() {
 
       it("merges query string variables", function() {
 
-        this.router.add('post', 'post');
+        this.router.add('post', 'post?{foo}');
         this.router.add('post.id', '/{id}');
 
         expect(this.router.match('post/123?foo=bar').params()).toEqual({id: '123', foo: 'bar'});
