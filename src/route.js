@@ -81,7 +81,7 @@ class Route {
      *
      * @var Array
      */
-    this._queryString = [];
+    this._queryStringVariables = [];
 
     /**
      * Children trees.
@@ -200,7 +200,7 @@ class Route {
    * @param  mixed name    A field name or an associative array of fields and values.
    * @param  Array data    An associative array of fields and values or an options array.
    * @param  Array options An options array.
-   * @return object        Returns `this`.
+   * @return self          Returns `this`.
    */
   set(name, value) {
     if (arguments.length !== 1) {
@@ -294,7 +294,10 @@ class Route {
     if (parts[1]) {
       var params = parts[1].split('&');
       for (var param of params) {
-        this._queryString.push(param.substring(1, param.length - 1));
+        if (param[0] !== '{' || param[param.length - 1] !== '}') {
+          throw new Error("Error query string variables in route's pattern definition must be delimited by brackets.");
+        }
+        this._queryStringVariables.push(param.substring(1, param.length - 1));
       }
     }
     return this;
@@ -328,24 +331,45 @@ class Route {
   }
 
   /**
-   * Checks if an URL match the route
+   * Gets the route's pattern query string variables.
    *
-   * @param  String path              The URL path string.
-   * @param  Object queryString       The URL queryString.
-   * @param  Object queryStringParams The matched queryString params.
-   * @return Object                   Returns the matched variables or `undefined` if the URL doesn't match.
+   * return Array
    */
-  match(path, queryString, queryStringParams) {
+  queryStringVariables() {
+    return this._queryStringVariables;
+  }
+
+  /**
+   * Checks the route match with a path + params
+   *
+   * @param  String path   The URL path string.
+   * @param  Object params The URL params.
+   * @return Object        Returns the matched variables or `undefined` if the URL doesn't match.
+   */
+  match(path, params) {
+    return this._match(path, params, {});
+  }
+
+  /**
+   * Helper for `Route.match()`
+   *
+   * @param  String path        The URL path string.
+   * @param  Object params      The URL params.
+   * @param  Object queryParams The query params content build all over the chain.
+   * @return Object             Returns the matched variables or `undefined` if the URL doesn't match.
+   */
+  _match(path, params, queryParams) {
     var regex = new RegExp('^' + this._regex);
     var matches = regex.exec(path);
     if (!matches) {
       return;
     }
 
-    queryStringParams = extend(queryStringParams || {}, this._buildQueryStringVariables(queryString));
+    queryParams = extend(queryParams || {}, this.buildQueryParams(params));
+
     var result;
     for (var [name, child] of this) {
-      result = child.match(path, queryString, queryStringParams);
+      result = child._match(path, params, queryParams);
       if (result !== undefined) {
         return result;
       }
@@ -359,7 +383,7 @@ class Route {
 
     return {
       route: this,
-      params: extend ({}, this.params(), this._buildVariables(matches), queryStringParams || {})
+      params: extend ({}, this.params(), this.buildVariables(matches), queryParams || {})
     };
   }
 
@@ -370,7 +394,7 @@ class Route {
    * @param  Array  values   The matched values.
    * @return Object          The route's variables.
    */
-  _buildVariables(values) {
+  buildVariables(values) {
     var variables = {};
     var i = 1;
 
@@ -409,19 +433,19 @@ class Route {
   }
 
   /**
-   * Combines route's query string with url query string values.
+   * Combines route's query string some params.
    *
-   * @param  String queryString The url query string.
-   * @return Object             The query string variables.
+   * @param  Object params The params to combine.
+   * @return Object        The query string params.
    */
-  _buildQueryStringVariables(queryString) {
-    var params = {};
-    for (var name of this._queryString) {
-      if (queryString[name] !== undefined) {
-        params[name] = queryString[name];
+  buildQueryParams(params) {
+    var result = {};
+    for (var name of this._queryStringVariables) {
+      if (params[name] !== undefined) {
+        result[name] = params[name];
       }
     }
-    return params;
+    return result;
   }
 
   /**
@@ -432,7 +456,7 @@ class Route {
    * @param Boolean
    */
   matchParams(fromParams, toParams) {
-    for (var name of this._queryString) {
+    for (var name of this._queryStringVariables) {
       if (String(fromParams[name]) !== String(toParams[name])) {
         return false;
       }
@@ -441,26 +465,68 @@ class Route {
   }
 
   /**
-   * Returns the route path.
+   * Generate route's URL.
    *
-   * @param  Array  params The route's variable parameters.
-   * @return string        The route path.
+   * @param  Object params  The route params (key-value pairs)
+   * @param  Object options Some link generation options
+   * @return String         The built URL
    */
-  path(params) {
-    var params = extend ({}, this.params(), params);
-    var path = this._path(this.token(), params);
-    path = trim.left(path, '/');
-    return path ? '/' + path : path;
+  link(params, options) {
+    var defaults = {
+      absolute: false,
+      basePath: ''
+    };
+    options = extend({}, defaults, options);
+
+    var path = this.path(params, options);
+
+    var basePath = trim(options.basePath, '/');
+    basePath = basePath ?  '/' + basePath : '';
+
+    var link = trim.right(basePath, '/') + path;
+
+    if (options.absolute) {
+      options = extend({}, { scheme: 'http', host: 'localhost' }, options);
+      options.scheme = options.scheme ? options.scheme + '://' : '//';
+      link = options.scheme + options.host + link;
+    }
+    return link;
   }
 
   /**
-   * Helper for `Route::path()`.
+   * Generate the relative path route.
+   *
+   * @param  Object params  The route params (key-value pairs)
+   * @param  Object options Some link generation options
+   * @return String         The built path
+   */
+  path(params, options) {
+    var defaults = {
+      query: {},
+      fragment: ''
+    };
+    options = extend({}, defaults, options);
+    var params = extend ({}, this.params(), params);
+    var path = this._tokenToPath(this.token(), params);
+    path = trim.left(path, '/');
+    path = path ? '/' + path : path;
+
+    options['query'] = qs.stringify(options['query']);
+
+    var query = options['query'] ? '?' + options['query'] : '';
+    var fragment = options['fragment'] ? '#' + options['fragment'] : '';
+
+    return path + query + fragment;
+  }
+
+  /**
+   * Generate a URL path from a route's token root.
    *
    * @param  array  $token    The token structure array.
    * @param  array  $params   The route parameters.
    * @return string           The URL path representation of the token structure array.
    */
-  _path(token, params)
+  _tokenToPath(token, params)
   {
     var path = '';
     for (var child of token['tokens']) {
@@ -476,10 +542,10 @@ class Route {
             throw new Error("Missing parameters `'"  + name + "'` for route: `'" + this.name() + "#/" + this.pattern() + "'`.");
           }
           for (var value of values) {
-            path += this._path(child, extend({}, params, { [name]: value }));
+            path += this._tokenToPath(child, extend({}, params, { [name]: value }));
           }
         } else {
-          path += this._path(child, params);
+          path += this._tokenToPath(child, params);
         }
         continue;
       }
@@ -511,45 +577,7 @@ class Route {
   }
 
   /**
-   * Returns the route path.
-   *
-   * @param  mixed  names   The dotted route name string or a route name array.
-   * @param  Array  params  The route parameters.
-   * @param  Array  options Options for generating the proper prefix. Accepted values are:
-   *                        - `'query'`    _mixed_   : The query string.
-   * @return string         The prefixed path, depending on the passed options.
-   */
-  link(names, params, options) {
-    var defaults = {
-      'query': {},
-    };
-    options = extend({}, defaults, options);
-
-    if (typeof options['query'] === 'string') {
-      options['query'] = qs.parse(options['query']);
-    }
-
-    if (names == null) {
-      throw new Error("A route's name can't be empty.");
-    }
-    names = Array.isArray(names) ? names : names.split('.');
-    params = params || {};
-    options.query = extend(options.query, this._buildQueryStringVariables(params));
-
-    if (names.length === 0) {
-      return this.path(params);
-    } else {
-      if (!this._children.has(names[0])) {
-        throw new Error("Missing parent route `'" + names[0] + "'`.");
-      }
-      var child = this._children.get(names[0]);
-      names.shift();
-      return child.link(names, params, options);
-    }
-  }
-
-  /**
-   * Gets/sets a route state.
+   * Add a route state.
    *
    * @param  mixed   names   The dotted route name string or a route name array.
    * @param  String  pattern A string pattern.
@@ -584,7 +612,6 @@ class Route {
     return this;
   }
 
-
   /**
    * Return a route instance from a route name.
    *
@@ -600,13 +627,33 @@ class Route {
     if (names.length === 0) {
       return this;
     } else {
-      if (!this._children.has(names[0])) {
-        throw new Error("Missing children route `'" + names[0] + "'` for `'" + this.name() + "'`.");
-      }
-      var child = this._children.get(names[0]);
+      var child = this.getChildren(names[0]);
       names.shift();
       return child.fetch(names);
     }
+  }
+
+  /**
+   * Check if a route's child exists.
+   *
+   * @param  String name The child name.
+   * @return Boolean
+   */
+  hasChildren(name) {
+    return !!this._children.has(name);
+  }
+
+  /**
+   * Return a route's child.
+   *
+   * @param  String name The child name.
+   * @return Object      A route
+   */
+  getChildren(name) {
+    if (!this.hasChildren(name)) {
+      throw new Error("Missing children route `'" + name + "'` for `'" + this.name() + "'`.");
+    }
+    return this._children.get(name);
   }
 
   /**

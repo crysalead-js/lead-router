@@ -22,7 +22,6 @@ describe("Route", function() {
       expect(route.params()).toEqual({ id: '1234' });
       expect(route.parent()).toBe(parent);
 
-
     });
 
   });
@@ -261,6 +260,13 @@ describe("Route", function() {
       var route = new Route({'pattern': 'post[/{id}]'});
       expect(route.match('post/123').params).toEqual({id: '123'});
       expect(route.match('post').params).toEqual({id: null});
+
+    });
+
+    it("support query string parameters", function() {
+
+      var route = new Route({'pattern': 'post/{id}?{foo}'});
+      expect(route.match('post/123', {foo: 'bar', bar: 'foo'}).params).toEqual({ id: '123', foo: 'bar'});
 
     });
 
