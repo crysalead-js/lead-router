@@ -81,7 +81,11 @@ class Transition {
     var target = to.hierarchy() || [];
 
     for (var index = 0; index < len; index++) {
-      if (origin[index] !== target[index] || !target[index].matchParams(params, this.params())) {
+      if (
+        origin[index] !== target[index] ||
+        !target[index].matchParams(params, this.params()) ||
+        origin[index].link(params) !== target[index].link(this.params())
+      ) {
         var i = len - 1;
         while (i >= index) {
           list.push(origin[i]);
@@ -112,7 +116,11 @@ class Transition {
       var origin = from.hierarchy();
 
       for (index = 0; index < len; index++) {
-        if (origin[index] !== target[index] || !target[index].matchParams(params, this.params())) {
+        if (
+          origin[index] !== target[index] ||
+          !target[index].matchParams(params, this.params()) ||
+          origin[index].link(params) !== target[index].link(this.params())
+        ) {
           break;
         }
       }
