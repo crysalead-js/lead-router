@@ -293,8 +293,7 @@ class Router {
    */
   push(name, params, replace) {
     var location = this.link(name, params);
-    history[replace ? 'replaceState' : 'pushState'](null, null, location);
-    this.dispatch(this.location());
+    this.navigate(location, replace);
   }
 
   /**
@@ -305,6 +304,17 @@ class Router {
    */
   replace(name, params) {
     this.push(name, params, true);
+  }
+
+  /**
+   * Navigate to an new location to the browser.
+   *
+   * @param  String  location The location URL.
+   * @param  Boolean replace  If `true` replace the url without pushing a new history entry.
+   */
+  navigate(location, replace) {
+    history[replace ? 'replaceState' : 'pushState'](null, null, location);
+    this.dispatch(this.location());
   }
 
   /**
