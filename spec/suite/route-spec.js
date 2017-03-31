@@ -47,7 +47,7 @@ describe("Route", function() {
       var content = { component: 'PostComponent' };
       route.add('post', '/post', content);
 
-      expect(route.fetch('post').content()).toBe(content);
+      expect(route.fetch('post').content()).toEqual(content);
 
     });
 
