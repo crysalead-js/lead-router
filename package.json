@@ -16,7 +16,7 @@
   "dependencies": {
     "component-emitter": "^1.2.1",
     "copy-clone": "^1.0.2",
-    "extend-merge": "^1.0.4",
+    "extend-merge": "^1.0.5",
     "for-each": "^0.3.2",
     "qs": "^6.4.0",
     "trim-character": "^2.0.1"
