@@ -30,6 +30,14 @@ class Router {
     this._basePath = this._basePath ?  '/' + this._basePath : '';
 
     /**
+     * The router base path regexp
+     *
+     * var RegExp
+     */
+    var basePath = this._basePath.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+    this._basePathRegExp =  new RegExp('^' + '(' + basePath + '$|' + basePath + '\/)');
+
+    /**
      * The router's tree
      *
      * var Object
@@ -131,7 +139,8 @@ class Router {
     if (!arguments.length) {
       return this._currentLocation;
     }
-    this._currentLocation = '/' + trim.left(location, '/');
+    var path = '/' + trim.left(location, '/');
+    this._currentLocation = '/' + trim.left(path.replace(this._basePathRegExp, '').replace(/index\.html$/, ''), '/');
     return this;
   }
 
@@ -281,8 +290,7 @@ class Router {
   location() {
     var path = '';
     path = decodeURI(location.pathname + location.search);
-    path = path.replace(this._basePath, '');
-    return path.replace(/index\.html$/, '');
+    return '/' + trim.left(path.replace(this._basePathRegExp, '').replace(/index\.html$/, ''), '/');
   }
 
   /**
