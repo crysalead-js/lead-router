@@ -125,7 +125,7 @@ class Router {
     if (!arguments.length) {
       return this._currentParams;
     }
-    this._currentParams = params;
+    this._currentParams = extend({}, params);
     return this;
   }
 
