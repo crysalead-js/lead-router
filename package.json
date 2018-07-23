@@ -1,6 +1,6 @@
 {
   "name": "lead-router",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Framework Agnostic Client-Side Router.",
   "license": "MIT",
   "keywords": [
