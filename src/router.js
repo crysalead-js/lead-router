@@ -186,7 +186,7 @@ class Router {
     if (name === '.') {
       var currentRoute = this.currentRoute();
       if (currentRoute) {
-        name =currentRoute.name();
+        name = currentRoute.name();
       } else {
         throw new Error("No current route available, the `'.'` shortcut can't be used.");
       }
