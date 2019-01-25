@@ -321,7 +321,7 @@ class Router {
    * @param  Boolean replace  If `true` replace the url without pushing a new history entry.
    */
   navigate(location, replace) {
-    history[replace ? 'replaceState' : 'pushState'](null, null, location);
+    history[replace ? 'replaceState' : 'pushState'](null, null, '/' + trim.left(location, '/'));
     this.dispatch(this.location());
   }
 
