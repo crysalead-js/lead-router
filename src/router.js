@@ -71,6 +71,13 @@ class Router {
      * var Function
      */
     this._listener = null;
+
+    /**
+     * The URL checked
+     *
+     * var RegExp
+     */
+    this._isAbsoluteUrl = new RegExp('^(?:[a-z]+:)?//', 'i');
   }
 
   /**
@@ -321,7 +328,8 @@ class Router {
    * @param  Boolean replace  If `true` replace the url without pushing a new history entry.
    */
   navigate(location, replace) {
-    history[replace ? 'replaceState' : 'pushState'](null, null, '/' + trim.left(location, '/'));
+    location = this._isAbsoluteUrl.test(location) ? location : '/' + trim.left(location, '/');
+    history[replace ? 'replaceState' : 'pushState'](null, null, location);
     this.dispatch(this.location());
   }
 
