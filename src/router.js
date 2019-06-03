@@ -45,6 +45,20 @@ class Router {
     this._route = new Route();
 
     /**
+     * The ongoing route instance
+     *
+     * var Object
+     */
+    this._ongoingRoute = null;
+
+    /**
+     * The ongoing params
+     *
+     * var Object
+     */
+    this._ongoingParams = {};
+
+    /**
      * The current route instance
      *
      * var Object
@@ -105,6 +119,34 @@ class Router {
    */
   add(name, pattern, content) {
     this._route.add(name, pattern, content);
+    return this;
+  }
+
+  /**
+   * Get/set the ongoing route.
+   *
+   * @param  Object|undefined The ongoing route to set or none to get the setted one.
+   * @return Object|self
+   */
+  ongoingRoute(route) {
+    if (!arguments.length) {
+      return this._ongoingRoute;
+    }
+    this._ongoingRoute = route;
+    return this;
+  }
+
+  /**
+   * Get/set the ongoing params.
+   *
+   * @param  Object|undefined The ongoing params to set or none to get the setted one.
+   * @return Object|self
+   */
+  ongoingParams(params) {
+    if (!arguments.length) {
+      return this._ongoingParams;
+    }
+    this._ongoingParams = extend({}, params);
     return this;
   }
 
@@ -191,9 +233,9 @@ class Router {
     }
 
     if (name === '.') {
-      var currentRoute = this.currentRoute();
-      if (currentRoute) {
-        name = currentRoute.name();
+      var ongoingRoute = this.ongoingRoute();
+      if (ongoingRoute) {
+        name = ongoingRoute.name();
       } else {
         throw new Error("No current route available, the `'.'` shortcut can't be used.");
       }
