@@ -14,21 +14,21 @@
   },
   "main": "src/index.js",
   "dependencies": {
-    "component-emitter": "^1.2.1",
+    "component-emitter": "^1.3.0",
     "copy-clone": "^1.0.2",
     "extend-merge": "^1.0.5",
-    "for-each": "^0.3.2",
-    "qs": "^6.4.0",
+    "for-each": "^0.3.3",
+    "qs": "^6.7.0",
     "trim-character": "^2.0.1"
   },
   "devDependencies": {
-    "bluebird": "^3.5.0",
-    "chai-kahlan": "^1.0.4",
-    "coveralls": "^2.13.0",
+    "bluebird": "^3.5.5",
+    "chai-kahlan": "^2.0.0",
+    "coveralls": "^3.0.5",
     "jasmine-kahlan": "^1.0.2",
-    "jsdom": "^9.12.0",
-    "mocha": "^3.2.0",
-    "nyc": "^10.2.0"
+    "jsdom": "^15.1.1",
+    "mocha": "^6.1.4",
+    "nyc": "^14.1.1"
   },
   "scripts": {
     "coverage-report": "nyc --reporter=lcov mocha",

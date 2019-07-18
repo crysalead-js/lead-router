@@ -1,7 +1,8 @@
 var jsdom = require("jsdom");
+const { JSDOM } = jsdom;
 
-global.document = jsdom.jsdom();
-global.window = global.document.defaultView;
+global.window = (new JSDOM(`<!DOCTYPE html>`)).window;
+global.document = window.document;
 global.history = window.history;
 global.location = window.location;
 
