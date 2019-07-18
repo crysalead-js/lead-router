@@ -350,7 +350,7 @@ class Router {
    */
   push(name, params, replace) {
     var location = this.link(name, params);
-    this.navigate(location, replace);
+    return this.navigate(location, replace);
   }
 
   /**
@@ -360,7 +360,7 @@ class Router {
    * @param  Object params The route params (key-value pairs)
    */
   replace(name, params) {
-    this.push(name, params, true);
+    return this.push(name, params, true);
   }
 
   /**
@@ -372,7 +372,7 @@ class Router {
   navigate(location, replace) {
     location = this._isAbsoluteUrl.test(location) ? location : '/' + trim.left(location, '/');
     history[replace ? 'replaceState' : 'pushState'](null, null, location);
-    this.dispatch(this.location());
+    return this.dispatch(this.location());
   }
 
   /**
