@@ -53,6 +53,13 @@ class Router {
     this._route = new Route();
 
     /**
+     * The default params
+     *
+     * var Object
+     */
+    this._defaultParams
+
+    /**
      * The ongoing route instance
      *
      * var Object
@@ -134,6 +141,20 @@ class Router {
    */
   add(name, pattern, content) {
     this._route.add(name, pattern, content);
+    return this;
+  }
+
+  /**
+   * Get/set the default params.
+   *
+   * @param  Object|undefined The ongoing route to set or none to get the setted one.
+   * @return Object|self
+   */
+  defaultParams(defaultParams) {
+    if (!arguments.length) {
+      return this._defaultParams;
+    }
+    this._defaultParams = defaultParams;
     return this;
   }
 
@@ -288,6 +309,7 @@ class Router {
     if (typeof options.query === 'string') {
       options.query = qs.parse(options.query);
     } else if (options.query == null) {
+      params = extend({}, this._defaultParams, params);
       options.query = this.buildQueryParams(name, params);
     }
 

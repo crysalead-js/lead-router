@@ -209,6 +209,31 @@ describe("Router", function() {
 
       });
 
+      context("with some default params", function() {
+
+        it("adds default params", function() {
+
+          this.router.defaultParams({ foo: 'bar' });
+          this.router.add('post', 'post/{id}?{foo}');
+          expect(this.router.link('post', { id: '123' })).toEqual('/post/123?foo=bar');
+
+        });
+
+        context("with nested path", function() {
+
+          it("builds query string params", function() {
+
+            this.router.defaultParams({ foo: 'bar', bar: 'baz' });
+            this.router.add('post', 'post?{foo}');
+            this.router.add('post.id', '/{id}?{bar}');
+            expect(this.router.link('post.id', { id: '123' })).toEqual('/post/123?foo=bar&bar=baz');
+
+          });
+
+        });
+
+      });
+
     });
 
     describe(".match()", function() {
