@@ -7,7 +7,8 @@ class Transition {
     config = extend({
       from: null,
       to: null,
-      params: {}
+      params: {},
+      scope: ''
     }, config);
 
     /**
@@ -23,6 +24,13 @@ class Transition {
      * @var String
      */
     this._to = config['to'];
+
+    /**
+     * The scope.
+     *
+     * @var String
+     */
+    this._scope = config['scope'];
 
     /**
      * Router instance.
@@ -57,6 +65,20 @@ class Transition {
       return this._to;
     }
     this._to = to;
+    return this;
+  }
+
+  /**
+   * Gets sets the new scope.
+   *
+   * @param  String      params The scope to set or none to get the setted one.
+   * @return String|self        The scope on get or `this` on set.
+   */
+  scope(scope) {
+    if (!arguments.length) {
+      return this._scope;
+    }
+    this._scope = scope;
     return this;
   }
 

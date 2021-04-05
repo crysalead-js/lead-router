@@ -482,6 +482,7 @@ class Route {
 
     var basePath = trim(options.basePath, '/');
     basePath = basePath ?  '/' + basePath : '';
+    basePath = basePath + (options.scope ? '/' + trim.left(options.scope, '/') : '');
 
     var link = trim.right(basePath, '/') + path;
 

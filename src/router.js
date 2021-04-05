@@ -11,6 +11,7 @@ class Router {
   constructor(options) {
     this._options = extend({
       basePath: '',
+      scopes: [],
       handler: (name, routes) => {
         throw new Error('Missing dispatching handler, you need to define a dispatching handler.');
       },
@@ -36,6 +37,13 @@ class Router {
      */
     var basePath = this._basePath.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     this._basePathRegExp =  new RegExp('^' + '(' + basePath + '$|' + basePath + '\/)');
+
+    /**
+     * Available scopes
+     *
+     * var Array
+     */
+    this._scopes = this._options.scopes;
 
     /**
      * The router's tree
@@ -64,6 +72,13 @@ class Router {
      * var Object
      */
     this._currentRoute = null;
+
+    /**
+     * The current scope prefix
+     *
+     * var String
+     */
+    this._currentScope = '';
 
     /**
      * The current params
@@ -165,6 +180,20 @@ class Router {
   }
 
   /**
+   * Get/set the scope.
+   *
+   * @param  String|undefined The scope prefix.
+   * @return String|self
+   */
+  currentScope(scope) {
+    if (!arguments.length) {
+      return this._currentScope;
+    }
+    this._currentScope = scope;
+    return this;
+  }
+
+  /**
    * Get/set the current params.
    *
    * @param  Object|undefined The current params to set or none to get the setted one.
@@ -227,7 +256,7 @@ class Router {
    * @param  Object options Some link generation options
    * @return String         The built URL
    */
-  link(name, params, options) {
+  link(name, params, options = {}) {
     if (name && name.match(/^(.*:)?\/\/.*/)) {
       return name;
     }
@@ -245,7 +274,7 @@ class Router {
       query: undefined
     };
     options = extend({}, defaults, options);
-
+    options.scope = options.scope != null ? options.scope : this._currentScope;
     var route, content;
 
     do {
@@ -300,12 +329,22 @@ class Router {
   match(location) {
     var parts = location.split('?');
     var path = trim.left(parts[0], '/');
+
+    // Find scope
+    var currentScope = '';
+    for (var scope of this._scopes) {
+      if (path.match(new RegExp('^' + '(' + scope + '$|' + scope + '\/)'))) {
+        currentScope = scope;
+      }
+    }
+    if (currentScope) {
+      path = path.replace(new RegExp('^' + '(' + currentScope + '$|' + currentScope + '\/)'), '');
+    }
     var bag = this._route.match(path, parts[1] ? qs.parse(parts[1]) : {});
 
     if (!bag) {
       return;
     }
-
     var content = bag.route.content();
 
     while (content.redirectTo) {
@@ -317,7 +356,8 @@ class Router {
     return new Transition({
       from: this.currentRoute(),
       to: bag.route,
-      params: bag.params
+      params: bag.params,
+      scope: currentScope
     });
   }
 
@@ -348,8 +388,8 @@ class Router {
    * @param  mixed  name The dotted route name string or a route name array.
    * @param  Object params The route params (key-value pairs)
    */
-  push(name, params, replace) {
-    var location = this.link(name, params);
+  push(name, params, replace = false, options = {}) {
+    var location = this.link(name, params, options);
     return this.navigate(location, replace);
   }
 
@@ -404,6 +444,13 @@ class Router {
       this.emit('404', location);
       return;
     }
+
+    let oldRoute = this.currentRoute();
+    let oldScope = this.currentScope();
+    let oldParams = this.currentParams();
+
+    this.currentScope(transition.scope());
+
     var to = transition.to();
     var toLocation = this.link(to.name(), transition.params());
 
@@ -413,9 +460,6 @@ class Router {
       history.replaceState(null, null, toLocation);
     }
 
-    let oldRoute = this.currentRoute();
-    let oldParams = this.currentParams();
-
     return this._options.handler(transition, this).then((updated) => {
       this.currentRoute(transition.to());
       this.currentParams(transition.params());
@@ -423,6 +467,7 @@ class Router {
     }, () => {
       this.emit('424', transition);
       if (oldRoute) {
+        this.currentScope(oldScope);
         this.push(oldRoute.name(), oldParams);
       }
     });
