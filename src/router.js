@@ -239,7 +239,7 @@ class Router {
       return this._currentLocation;
     }
     var path = '/' + trim.left(location, '/');
-    this._currentLocation = '/' + trim.left(path.replace(this._basePathRegExp, '').replace(/index\.html$/, ''), '/');
+    this._currentLocation = '/' + trim.left(path.replace(/index\.html$/, ''), '/');
     return this;
   }
 
@@ -332,9 +332,9 @@ class Router {
 
     var route = this._route;
     var params = params || {};
-    var result = {}
+    var result = {};
 
-    while(names.length) {
+    while(names.length) {
       var route = route.getChildren(names[0]);
       result = extend(result, route.buildQueryParams(params));
       names.shift();
@@ -400,8 +400,8 @@ class Router {
    */
   location() {
     var path = '';
-    path = decodeURI(location.pathname + location.search);
-    return '/' + trim.left(path.replace(this._basePathRegExp, '').replace(/index\.html$/, ''), '/');
+    path = location.pathname + location.search;
+    return '/' + trim.left(path.replace(/index\.html$/, ''), '/');
   }
 
   /**
@@ -432,9 +432,13 @@ class Router {
    * @param  Boolean replace  If `true` replace the url without pushing a new history entry.
    */
   navigate(location, replace) {
-    location = this._isAbsoluteUrl.test(location) ? location : '/' + trim.left(location, '/');
-    history[replace ? 'replaceState' : 'pushState'](null, null, location);
-    return this.dispatch(this.location());
+    location = this._isAbsoluteUrl.test(location) ? location : '/' + trim.left(location.replace(/index\.html$/, ''), '/');
+    return this.dispatch(location, true).then(() => {
+      if (location) {
+        this.currentLocation(location);
+        history[replace ? 'replaceState' : 'pushState'](null, null, location);
+      }
+    });
   }
 
   /**
@@ -452,19 +456,26 @@ class Router {
    *
    * @param String|undefined location The URL to dispatch.
    */
-  dispatch(location) {
-    location = location || this.location();
-    location = '/' + trim.left(location, '/');
-    if (this.currentLocation() === location) {
-      return;
+  dispatch(location, navigation) {
+    if (this._in) {
+      return Promise.resolve(this.currentLocation());
     }
+    this._in = true;
+    location = location || this.location();
+    location = '/' + trim.left(location.replace(/index\.html$/, ''), '/');
+    if (this.currentLocation() === location) {
+      this._in = false;
+      return Promise.resolve(location);
+    }
+
     this.currentLocation(location);
 
-    var transition = this.match(location);
+    var transition = this.match(location.replace(this._basePathRegExp, ''));
 
     if (!transition) {
+      this._in = false;
       this.emit('404', location);
-      return;
+      return Promise.reject(new Error('Page not found.'));
     }
 
     let oldRoute = this.currentRoute();
@@ -482,18 +493,29 @@ class Router {
       history.replaceState(null, null, toLocation);
     }
 
-    return this._options.handler(transition, this).then((updated) => {
+    return this._options.handler(transition, this).then((location) => {
+      if (this.currentLocation() !== location && !navigation) {
+        this.currentLocation(location);
+        history.replaceState(null, null, location);
+      }
       this.currentRoute(transition.to());
       this.currentParams(transition.params());
       this.emit('transitioned', transition);
+      this._in = false;
+      return location;
     }, () => {
       this.emit('424', transition);
       if (oldRoute) {
         this.currentScope(oldScope);
-        this.push(oldRoute.name(), oldParams);
+        this.abort().push(oldRoute.name(), oldParams);
       }
     });
   };
+
+  abort() {
+    this._in = false;
+    return this;
+  }
 
   /**
    * Listen for browser URL changes.

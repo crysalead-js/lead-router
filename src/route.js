@@ -512,9 +512,16 @@ class Route {
     path = trim.left(path, '/');
     path = path ? '/' + path : path;
 
-    options['query'] = qs.stringify(options['query']);
+    var query = options['query'];
 
-    var query = options['query'] ? '?' + options['query'] : '';
+    for (var key in query) {
+      if (Array.isArray(query[key]) && !query[key].length) {
+        query[key] = null;
+      }
+    }
+
+    query = qs.stringify(query);
+    query = query ? '?' + query : '';
     var fragment = options['fragment'] ? '#' + options['fragment'] : '';
 
     return path + query + fragment;
@@ -527,8 +534,7 @@ class Route {
    * @param  array  $params   The route parameters.
    * @return string           The URL path representation of the token structure array.
    */
-  _tokenToPath(token, params)
-  {
+  _tokenToPath(token, params) {
     var path = '';
     for (var child of token['tokens']) {
       if (typeof child === 'string') {
