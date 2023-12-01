@@ -1,6 +1,6 @@
 {
   "name": "lead-router",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Framework Agnostic Client-Side Router.",
   "license": "MIT",
   "keywords": [
@@ -18,16 +18,16 @@
     "copy-clone": "^1.0.2",
     "extend-merge": "^1.0.6",
     "for-each": "^0.3.3",
-    "qs": "^6.10.1",
+    "qs": "^6.11.2",
     "trim-character": "^2.0.1"
   },
   "devDependencies": {
     "bluebird": "^3.7.2",
-    "chai-kahlan": "^2.0.0",
-    "coveralls": "^3.1.0",
+    "chai-kahlan": "^2.0.1",
+    "coveralls": "^3.1.1",
     "jasmine-kahlan": "^1.0.2",
-    "jsdom": "^16.5.2",
-    "mocha": "^8.3.2",
+    "jsdom": "^23.0.1",
+    "mocha": "^10.2.0",
     "nyc": "^15.1.0"
   },
   "scripts": {
