@@ -362,7 +362,7 @@ class Router {
     if (currentScope) {
       path = path.replace(new RegExp('^' + '(' + currentScope + '$|' + currentScope + '\/)'), '');
     }
-    var bag = this._route.match(path, parts[1] ? qs.parse(parts[1]) : {});
+    var bag = this._route.match(path, parts[1] ? qs.parse(parts[1], { arrayLimit: Infinity }) : {});
 
     if (!bag) {
       return;
